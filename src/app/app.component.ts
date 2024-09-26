@@ -36,6 +36,8 @@ export class AppComponent implements OnInit {
 
     // Add more participants as needed
   ];
+  isMuted: boolean = false;
+  isCameraOff: boolean = false;
   // Agora options
   options = {
     appId: 'f27448ef49134e5aa176ef56fc17bf63',  // Set your App ID
@@ -83,12 +85,14 @@ export class AppComponent implements OnInit {
         participantActionDiv.className = 'participant-action';
   
         const muteButton = document.createElement('button');
-        muteButton.className = 'btn-mute';
-        participantActionDiv.appendChild(muteButton);
-  
-        const cameraButton = document.createElement('button');
-        cameraButton.className = 'btn-camera';
-        participantActionDiv.appendChild(cameraButton);
+    muteButton.className = 'btn-mute'; // Base class
+    muteButton.style.backgroundColor = user.hasAudio ? '' : 'red'; // Set background color to red if muted
+    participantActionDiv.appendChild(muteButton);
+
+    const cameraButton = document.createElement('button');
+    cameraButton.className = 'btn-camera'; // Base class
+    cameraButton.style.backgroundColor = user.hasVideo ? '' : 'red'; // Set background color to red if camera is off
+    participantActionDiv.appendChild(cameraButton);
   
         // Add participant name
         const nameTag = document.createElement('a');
@@ -98,6 +102,17 @@ export class AppComponent implements OnInit {
         remotePlayerContainer.appendChild(participantActionDiv);
         remotePlayerContainer.appendChild(nameTag);
   
+         if (mediaType === 'video' && user.hasVideo) {
+      const remoteVideoTrack = user.videoTrack;
+      remoteVideoTrack?.play(remotePlayerContainer); // Play the video track in the container
+    } else {
+      // If no video, show a placeholder image
+      const placeholderImage = document.createElement('img');
+      placeholderImage.src = '/public/img1.jpg'; // Adjust path as necessary
+      placeholderImage.alt = 'No video available';
+      placeholderImage.classList.add('video-placeholder'); // Optional: add a class for styling
+      remotePlayerContainer.appendChild(placeholderImage);
+    }
         // Get all elements with the class 'video-participant'
         const videoParticipantElements = document.getElementsByClassName('video-participant');
   
@@ -243,5 +258,31 @@ export class AppComponent implements OnInit {
     this.agoraMessagingService.onMessageReceived((messageData) => {
       this.receiveMessage(messageData);
     });
+  }
+  toggleMute() {
+    if (this.rtc.localAudioTrack) {
+      if (!this.isMuted) {
+        this.rtc.localAudioTrack.setEnabled(false);  // Mute the audio
+        console.log('Audio muted');
+      } else {
+        this.rtc.localAudioTrack.setEnabled(true);   // Unmute the audio
+        console.log('Audio unmuted');
+      }
+      this.isMuted = !this.isMuted; // Toggle the mute state
+    }
+  }
+
+  // Turn on/off the camera
+  toggleCamera() {
+    if (this.rtc.localVideoTrack) {
+      if (!this.isCameraOff) {
+        this.rtc.localVideoTrack.setEnabled(false);  // Turn off the camera
+        console.log('Camera turned off');
+      } else {
+        this.rtc.localVideoTrack.setEnabled(true);   // Turn on the camera
+        console.log('Camera turned on');
+      }
+      this.isCameraOff = !this.isCameraOff; // Toggle the camera state
+    }
   }
 }

@@ -112,10 +112,19 @@
     </div>
 
       <div class="video-call-actions">
-        <button class="video-action-button mic"></button>
-        <button class="video-action-button camera"></button>
-        <button class="video-action-button maximize"></button>
-        <button class="video-action-button endcall">Leave</button>
+        <button
+  class="video-action-button mic"
+  [ngClass]="{'active': isMuted, 'inactive': !isMuted}"
+  (click)="toggleMute()"
+></button>
+
+<button
+  class="video-action-button camera"
+  [ngClass]="{'active': isCameraOff, 'inactive': !isCameraOff}"
+  (click)="toggleCamera()"
+></button>
+        <button class="video-action-button maximize" ></button>
+        <button class="video-action-button endcall" (click)="leaveChannel()">Leave</button>
         <button class="video-action-button magnifier">
           <!-- ZoomIn icon -->
          <!-- ZoomIn icon -->

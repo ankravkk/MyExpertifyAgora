@@ -476,6 +476,9 @@
     display: flex;
     gap: 10px;
   }
+  .video-action-button.active {
+    background-color: #ff1953; /* Color when active (muted or camera off) */
+  }
   .mode-switch {
     z-index: 1;
     position: absolute;
