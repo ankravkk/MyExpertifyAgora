@@ -137,6 +137,21 @@
     white-space: nowrap;
   }
 
+  .right {
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+  }
+  
+  .left {
+    transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+  }
+  .arrow {
+    border: solid black;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 3px;
+  }
   .video-participant::-webkit-scrollbar {
     display: none;
 }
@@ -185,12 +200,13 @@
   /*==================== Chat ====================*/
   .chat-container {
       /* margin-bottom: 59px; */
-      margin-top: 0px;
+      margin-top: -13px;
       background-color: var(--chat-background);
       border-radius: 10px;
       display: flex;
       flex-direction: column;
-      height: 548px;
+      height: 633px;
+  
   }
   .chat-header {
     padding: 16px;

@@ -29,13 +29,7 @@ export class AppComponent implements OnInit {
   username: string = 'User'; // Placeholder for the username
   messageInput: string = '';
   messages: { user: string; text: string }[] = []; // Store chat messages
-  participants = [
-    { id: 1, name: 'Tim Russel', isMuted: false, isCameraOn: true },
-    { id: 2, name: 'John Doe', isMuted: true, isCameraOn: false },
-   
 
-    // Add more participants as needed
-  ];
   isMuted: boolean = false;
   isCameraOff: boolean = false;
   // Agora options
@@ -85,14 +79,14 @@ export class AppComponent implements OnInit {
         participantActionDiv.className = 'participant-action';
   
         const muteButton = document.createElement('button');
-    muteButton.className = 'btn-mute'; // Base class
-    muteButton.style.backgroundColor = user.hasAudio ? '' : 'red'; // Set background color to red if muted
-    participantActionDiv.appendChild(muteButton);
+        muteButton.className = 'btn-mute'; // Base class
+        muteButton.style.backgroundColor = user.hasAudio ? '' : 'red'; // Set background color to red if muted
+        participantActionDiv.appendChild(muteButton);
 
-    const cameraButton = document.createElement('button');
-    cameraButton.className = 'btn-camera'; // Base class
-    cameraButton.style.backgroundColor = user.hasVideo ? '' : 'red'; // Set background color to red if camera is off
-    participantActionDiv.appendChild(cameraButton);
+       const cameraButton = document.createElement('button');
+       cameraButton.className = 'btn-camera'; // Base class
+       cameraButton.style.backgroundColor = user.hasVideo ? '' : 'red'; // Set background color to red if camera is off
+       participantActionDiv.appendChild(cameraButton);
   
         // Add participant name
         const nameTag = document.createElement('a');
