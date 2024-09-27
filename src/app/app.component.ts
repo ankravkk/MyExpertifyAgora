@@ -29,7 +29,7 @@ export class AppComponent implements OnInit {
   username: string = 'User'; // Placeholder for the username
   messageInput: string = '';
   messages: { user: string; text: string }[] = []; // Store chat messages
-
+ 
   isMuted: boolean = false;
   isCameraOff: boolean = false;
   // Agora options
@@ -194,38 +194,56 @@ export class AppComponent implements OnInit {
   // Toggle screen sharing
   async toggleScreenShare() {
     if (!this.isScreenSharing) {
-      this.isScreenSharing = true;
-      this.rtc.screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        this.isScreenSharing = true;
 
-      try {
-        const screenTracks = await AgoraRTC.createScreenVideoTrack({
-          encoderConfig: '1080p',
-        }) as ILocalVideoTrack | [ILocalVideoTrack, ILocalAudioTrack];
+        // Generate a new UID for the screen sharing participant
+        const screenShareUid = this.options.uid+'1'; // Increment UID for demonstration
 
-        if (Array.isArray(screenTracks)) {
-          this.rtc.localScreenTrack = screenTracks[0];
-        } else {
-          this.rtc.localScreenTrack = screenTracks;
+        // Create a new client for screen sharing
+        const screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+
+        try {
+            // Create screen track
+            const screenTracks = await AgoraRTC.createScreenVideoTrack({
+                encoderConfig: '1080p',
+            }) as ILocalVideoTrack | [ILocalVideoTrack, ILocalAudioTrack];
+
+            if (Array.isArray(screenTracks)) {
+                this.rtc.localScreenTrack = screenTracks[0];
+            } else {
+                this.rtc.localScreenTrack = screenTracks;
+            }
+
+            // Join the screen sharing channel with a new UID
+            await screenClient.join(this.options.appId, this.options.channel, this.options.token, screenShareUid);
+
+            // Publish the screen track
+            if (this.rtc.localScreenTrack) {
+                await screenClient.publish(this.rtc.localScreenTrack);
+                console.log('Screen sharing started');
+            }
+        } catch (error) {
+            console.error('Error starting screen share:', error);
+        }
+    } else {
+        this.isScreenSharing = false;
+
+        // Stop the screen track
+        if (this.rtc.localScreenTrack) {
+            this.rtc.localScreenTrack.close();
+            this.rtc.localScreenTrack = null;
         }
 
-        await this.rtc.screenClient?.join(this.options.appId, this.options.channel, this.options.token, this.options.uid);
-        if (this.rtc.localScreenTrack) await this.rtc.screenClient?.publish(this.rtc.localScreenTrack);
-        console.log('Screen sharing started');
-      } catch (error) {
-        console.error('Error starting screen share:', error);
-      }
-    } else {
-      this.isScreenSharing = false;
-      if (this.rtc.localScreenTrack) this.rtc.localScreenTrack.close();
-
-      try {
-        await this.rtc.screenClient?.leave();
-        console.log('Screen sharing stopped');
-      } catch (error) {
-        console.error('Error stopping screen share:', error);
-      }
+        try {
+            // Leave the screen sharing channel
+            await this.rtc.screenClient?.leave();
+            console.log('Screen sharing stopped');
+        } catch (error) {
+            console.error('Error stopping screen share:', error);
+        }
     }
-  }
+}
+
 
   // Send chat messages
   sendMessage() {
