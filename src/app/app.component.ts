@@ -138,14 +138,31 @@ export class AppComponent implements OnInit {
         remoteAudioTrack?.play();
       }
     });
-  
-    this.rtc.client.on('user-unpublished', (user: IAgoraRTCRemoteUser) => {
-      console.log('User unpublished:', user.uid);
-      const remotePlayerContainer = document.getElementById(`remote-${user.uid}`);
-      if (remotePlayerContainer) {
-        remotePlayerContainer.remove(); // Remove the video element when the user leaves
+ this.rtc.client.on('user-unpublished', (user: IAgoraRTCRemoteUser, mediaType) => {
+  console.log('User unpublished:', user.uid);
+
+  // Handle video unpublishing
+  if (mediaType === 'video') {
+    const remotePlayerContainer = document.getElementById(`remote-${user.uid}`);
+    if (remotePlayerContainer) {
+      // If there's a video track, stop it before removing the container
+      if (user.videoTrack) {
+        user.videoTrack.stop(); // Stop the video track
       }
-    });
+
+      // Remove the video element from the DOM
+      remotePlayerContainer.remove();
+    }
+  }
+
+  // Handle audio unpublishing
+  if (mediaType === 'audio') {
+    if (user.audioTrack) {
+      user.audioTrack.stop(); // Stop the audio track
+    }
+  }
+});
+
   }
   
   // Join the Agora channel
