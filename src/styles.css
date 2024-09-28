@@ -136,6 +136,17 @@
     margin-top: 40px;
     white-space: nowrap;
   }
+  .video-participant-screen {
+    width: 34%;
+    height: 98px;
+    position: relative;
+    scroll-behavior: smooth;
+    overflow-x: auto;
+    overflow-y: scroll;
+    margin-top: 40px;
+    white-space: nowrap;
+    margin-top: 6px;
+  }
 
   .right {
     transform: rotate(-45deg);
@@ -160,6 +171,15 @@
 .video-participant {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+.video-participant-screen::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.video-participant-screen {
+-ms-overflow-style: none;  /* IE and Edge */
+scrollbar-width: none;  /* Firefox */
 }
 
 

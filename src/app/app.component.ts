@@ -26,7 +26,7 @@ export class AppComponent implements OnInit {
   };
 
   // Chat properties
-  username: string = 'User'; // Placeholder for the username
+  username: string = ''; // Placeholder for the username
   messageInput: string = '';
   messages: { user: string; text: string }[] = []; // Store chat messages
  
@@ -43,19 +43,20 @@ export class AppComponent implements OnInit {
   isScreenSharing = false;
 
   ngOnInit() {
+    
     this.initializeRTCClient();
-    this.initializeChat();
+   // this.initializeChat();
 
-    this.agoraMessagingService.initialize(this.options.appId, null, null)
-      .then(() => {
-        console.log('Agora chat initialized successfully');
-        this.agoraMessagingService.onMessageReceived((message) => {
-          this.messages.push(message);
-        });
-      })
-      .catch(error => {
-        console.error('Agora chat initialization failed:', error);
-      });
+    // this.agoraMessagingService.initialize(this.options.appId, null, null)
+    //   .then(() => {
+    //     console.log('Agora chat initialized successfully');
+    //     this.agoraMessagingService.onMessageReceived((message) => {
+    //       this.messages.push(message);
+    //     });
+    //   })
+    //   .catch(error => {
+    //     console.error('Agora chat initialization failed:', error);
+    //   });
   }
 
   // Initialize the RTC client
@@ -66,10 +67,11 @@ export class AppComponent implements OnInit {
       await this.rtc.client?.subscribe(user, mediaType);
       console.log('Subscribed to user:', user.uid);
   
-      if (mediaType === 'video') {
+      if ((mediaType === 'video'&&!this.isScreenSharing)) {
         const remoteVideoTrack = user.videoTrack;
-  
+      
         // Create a new remote player container for each user
+        
         const remotePlayerContainer = document.createElement('div');
         remotePlayerContainer.id = `remote-${user.uid}`; // Unique ID for each remote user
         remotePlayerContainer.classList.add('participant'); // Add class for styling
@@ -92,20 +94,20 @@ export class AppComponent implements OnInit {
         const nameTag = document.createElement('a');
         nameTag.href = '#';
         nameTag.className = 'name-tag';
-        nameTag.textContent = `Participant ${user.uid}`; // Dynamic participant name based on UID
+        nameTag.textContent = this.username; // Dynamic participant name based on UID
         remotePlayerContainer.appendChild(participantActionDiv);
         remotePlayerContainer.appendChild(nameTag);
   
          if (mediaType === 'video' && user.hasVideo) {
-      const remoteVideoTrack = user.videoTrack;
-      remoteVideoTrack?.play(remotePlayerContainer); // Play the video track in the container
-    } else {
+            const remoteVideoTrack = user.videoTrack;
+            remoteVideoTrack?.play(remotePlayerContainer); // Play the video track in the container
+        }else {
       // If no video, show a placeholder image
-      const placeholderImage = document.createElement('img');
-      placeholderImage.src = '/public/img1.jpg'; // Adjust path as necessary
-      placeholderImage.alt = 'No video available';
-      placeholderImage.classList.add('video-placeholder'); // Optional: add a class for styling
-      remotePlayerContainer.appendChild(placeholderImage);
+            const placeholderImage = document.createElement('img');
+            placeholderImage.src = '/public/img1.jpg'; // Adjust path as necessary
+            placeholderImage.alt = 'No video available';
+            placeholderImage.classList.add('video-placeholder'); // Optional: add a class for styling
+            remotePlayerContainer.appendChild(placeholderImage);
     }
         // Get all elements with the class 'video-participant'
         const videoParticipantElements = document.getElementsByClassName('video-participant');
@@ -153,7 +155,7 @@ export class AppComponent implements OnInit {
 
     const localTracks = await Promise.all([
       AgoraRTC.createMicrophoneAudioTrack(),
-      AgoraRTC.createCameraVideoTrack()
+      AgoraRTC.createCameraVideoTrack(),
     ]);
 
     // Assign tracks safely
@@ -190,61 +192,100 @@ export class AppComponent implements OnInit {
     const localPlayerContainer = document.getElementById('123456');
     localPlayerContainer != null ? this.rtc.localVideoTrack?.play(localPlayerContainer):undefined;
   }
+  promptForUsername() {
+    const usernameInput = prompt('Please enter your name:');
+    if (usernameInput) {
+      this.username = usernameInput; // Store the entered name
+    }
+  }
+
 
   // Toggle screen sharing
+
   async toggleScreenShare() {
     if (!this.isScreenSharing) {
-        this.isScreenSharing = true;
-
-        // Generate a new UID for the screen sharing participant
-        const screenShareUid = this.options.uid+'1'; // Increment UID for demonstration
-
-        // Create a new client for screen sharing
-        const screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-
-        try {
-            // Create screen track
-            const screenTracks = await AgoraRTC.createScreenVideoTrack({
-                encoderConfig: '1080p',
-            }) as ILocalVideoTrack | [ILocalVideoTrack, ILocalAudioTrack];
-
-            if (Array.isArray(screenTracks)) {
-                this.rtc.localScreenTrack = screenTracks[0];
-            } else {
-                this.rtc.localScreenTrack = screenTracks;
-            }
-
-            // Join the screen sharing channel with a new UID
-            await screenClient.join(this.options.appId, this.options.channel, this.options.token, screenShareUid);
-
-            // Publish the screen track
-            if (this.rtc.localScreenTrack) {
-                await screenClient.publish(this.rtc.localScreenTrack);
-                console.log('Screen sharing started');
-            }
-        } catch (error) {
-            console.error('Error starting screen share:', error);
+      this.isScreenSharing = true;
+  
+      // Generate a new UID for the screen sharing participant
+      const screenShareUid = this.options.uid + '1'; // Increment UID for demonstration
+  
+      // Create a new client for screen sharing
+      const screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+  
+      try {
+        // Create screen track
+        const screenTracks = await AgoraRTC.createScreenVideoTrack({
+          encoderConfig: '1080p'
+        }) as ILocalVideoTrack | [ILocalVideoTrack, ILocalAudioTrack];
+  
+        if (Array.isArray(screenTracks)) {
+          this.rtc.localScreenTrack = screenTracks[0];
+        } else {
+          this.rtc.localScreenTrack = screenTracks;
         }
-    } else {
-        this.isScreenSharing = false;
-
-        // Stop the screen track
+  
+        // Join the screen sharing channel with a new UID
+        await screenClient.join(this.options.appId, this.options.channel, this.options.token, screenShareUid);
+  
+        // Publish the screen track
         if (this.rtc.localScreenTrack) {
-            this.rtc.localScreenTrack.close();
-            this.rtc.localScreenTrack = null;
+          await screenClient.publish(this.rtc.localScreenTrack);
+          console.log('Screen sharing started');
+  
+          // Add the screen sharing video to a separate container
+         // this.displayScreenShare();
         }
-
-        try {
-            // Leave the screen sharing channel
-            await this.rtc.screenClient?.leave();
-            console.log('Screen sharing stopped');
-        } catch (error) {
-            console.error('Error stopping screen share:', error);
-        }
+      } catch (error) {
+        console.error('Error starting screen share:', error);
+      }
+    } else {
+      this.isScreenSharing = false;
+  
+      // Stop the screen track
+      if (this.rtc.localScreenTrack) {
+        this.rtc.localScreenTrack.close();
+        this.rtc.localScreenTrack = null;
+      }
+  
+      try {
+        // Leave the screen sharing channel
+        await this.rtc.screenClient?.leave();
+        console.log('Screen sharing stopped');
+  
+        // Remove the screen sharing container
+        this.removeScreenShare();
+      } catch (error) {
+        console.error('Error stopping screen share:', error);
+      }
     }
-}
-
-
+  }
+  
+  // Display screen share in a separate container
+  displayScreenShare() {
+    const screenShareContainer = document.getElementById('screen-share-container');
+    if (!screenShareContainer) {
+      // Create a new div if it doesn't exist
+      const newScreenShareContainer = document.createElement('div');
+      newScreenShareContainer.id = 'screen-share-container';
+      newScreenShareContainer.classList.add('video-participant-screen');
+  
+      document.body.appendChild(newScreenShareContainer); // Append to body or specific container
+      //this.rtc.localScreenTrack?.play(newScreenShareContainer);
+      //alert(JSON.stringify(this.rtc.localScreenTrack));
+    } else {
+      alert("here no");
+      //this.rtc.localScreenTrack?.play(screenShareContainer);
+    }
+  }
+  
+  // Remove the screen share container when screen sharing is stopped
+  removeScreenShare() {
+    const screenShareContainer = document.getElementById('screen-share-container');
+    if (screenShareContainer) {
+      screenShareContainer.remove();
+    }
+  }
+  
   // Send chat messages
   sendMessage() {
     if (this.messageInput.trim()) {
