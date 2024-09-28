@@ -85,6 +85,16 @@ export class AppComponent implements OnInit {
         muteButton.style.backgroundColor = user.hasAudio ? '' : 'red'; // Set background color to red if muted
         participantActionDiv.appendChild(muteButton);
 
+        muteButton.addEventListener('click', async () => {
+          if (user.audioTrack) {
+            // Toggle mute/unmute
+            if (user.audioTrack.isPlaying) {
+              user.audioTrack.stop(); // Mute the user
+              muteButton.style.backgroundColor = 'red'; // Change button to red when muted
+            }
+          }
+        });
+
        const cameraButton = document.createElement('button');
        cameraButton.className = 'btn-camera'; // Base class
        cameraButton.style.backgroundColor = user.hasVideo ? '' : 'red'; // Set background color to red if camera is off
@@ -145,12 +155,9 @@ export class AppComponent implements OnInit {
   if (mediaType === 'video') {
     const remotePlayerContainer = document.getElementById(`remote-${user.uid}`);
     if (remotePlayerContainer) {
-      // If there's a video track, stop it before removing the container
       if (user.videoTrack) {
-        user.videoTrack.stop(); // Stop the video track
+        user.videoTrack.stop(); 
       }
-
-      // Remove the video element from the DOM
       remotePlayerContainer.remove();
     }
   }
@@ -158,7 +165,7 @@ export class AppComponent implements OnInit {
   // Handle audio unpublishing
   if (mediaType === 'audio') {
     if (user.audioTrack) {
-      user.audioTrack.stop(); // Stop the audio track
+      user.audioTrack.stop(); 
     }
   }
 });
