@@ -83,7 +83,7 @@ export class AppComponent implements OnInit {
               user.audioTrack.stop();
               (muteButton as HTMLElement).style.backgroundColor = 'red'; // Cast to HTMLElement
             } else {
-             
+
             }
           }
 
@@ -232,14 +232,12 @@ export class AppComponent implements OnInit {
   // Toggle screen sharing
 
   async toggleScreenShare() {
+
     if (!this.isScreenSharing) {
-      this.isScreenSharing = true;
 
       // Generate a new UID for the screen sharing participant
-      const screenShareUid = this.options.uid + '1'; // Increment UID for demonstration
 
       // Create a new client for screen sharing
-      const screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
       try {
         // Create screen track
@@ -253,7 +251,23 @@ export class AppComponent implements OnInit {
           this.rtc.localScreenTrack = screenTracks;
         }
 
+        const screenShareUid = this.options.uid = Math.floor(Math.random() * 10000); // Increment UID for demonstration
+        // Increment UID for demonstration
+        const screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+        const apiData: APIResponse = await firstValueFrom(
+          this.agoraMessagingService.getTokenChannel(this.options.uid, this.options.channel)
+        );
+        if (apiData.success) {
+          this.options.token = apiData.data;
+          await this.rtc.screenClient?.join(this.options.appId, this.options.channel, this.options.token, screenShareUid);
+          this.isScreenSharing = true;
+
+        } else {
+          console.error('Error retrieving token:', apiData.error);
+        }
+
         // Join the screen sharing channel with a new UID
+        alert(this.options.token)
         await screenClient.join(this.options.appId, this.options.channel, this.options.token, screenShareUid);
 
         // Publish the screen track
