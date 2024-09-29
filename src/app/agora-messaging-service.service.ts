@@ -1,16 +1,30 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import AgoraChat from 'agora-chat'; // Correct import for Agora Chat
+import  AgoraChat from 'agora-chat'; // Correct import for Agora Chat
+import { catchError, map, Observable, throwError } from 'rxjs';
+
+export interface APIResponse{
+ success : string,
+ data: string,
+ error:String
+}
+
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
+
+
+
 export class AgoraMessagingService {
   private chatClient: any; // Store AgoraChat client instance
   private messageListener!: (message: any) => void;
   private isClientInitialized = false;
-  private appKey = 'b2f227e4ddbb4d0abc1627d5240aea41'; // Store your Agora App Key
+  private appKey = ''; // Store your Agora App Key
+  
+  constructor(private http: HttpClient) {
 
-  constructor() {}
+  }
 
   // Initialize the Agora Chat client
   initialize(appKey: string, userId: string|null, token: string|null): Promise<void> {
@@ -81,4 +95,29 @@ export class AgoraMessagingService {
         });
     });
   }
+
+  // Method to get the token for a specific user
+  getToken(): Observable<APIResponse> {
+    const apiUrl = 'https://api.myexpertify.com/agora/chat/app/token';
+    return this.http.get<APIResponse>(`${apiUrl}`).pipe(
+      map((res) => res), // Extract the data field from the response
+      catchError((error) => {
+        console.error('Error fetching token', error);
+        return []; // Handle error, returning an empty array or other appropriate fallback
+      })
+    );
+  }
+
+  getTokenChannel(uid: number, channel: string): Observable<APIResponse> {
+    const apiUrl = 'https://api.myexpertify.com/agora/chat/user/channel';
+    const url = `${apiUrl}?uid=${uid}&channel=${channel}`;
+    return this.http.get<APIResponse>(url).pipe(
+      map((res) => res), // Directly returning the response
+      catchError((error) => {
+        console.error('Error fetching token', error);
+        return throwError(() => new Error('Error fetching token')); // Handle error appropriately
+      })
+    );
+}
+
 }

@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import AgoraRTC, { IAgoraRTCClient, ILocalTrack, ILocalAudioTrack, ILocalVideoTrack, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
 import { FormsModule } from '@angular/forms'; // Import FormsModule
 import { CommonModule } from '@angular/common';
-import { AgoraMessagingService } from './agora-messaging-service.service';
+import { AgoraMessagingService, APIResponse } from './agora-messaging-service.service';
+import { v4 as uuidv4 } from 'uuid';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -13,8 +15,8 @@ import { AgoraMessagingService } from './agora-messaging-service.service';
   standalone: true
 })
 export class AppComponent implements OnInit {
-[x: string]: any;
-  constructor(private agoraMessagingService: AgoraMessagingService) {}
+  [x: string]: any;
+  constructor(private agoraMessagingService: AgoraMessagingService) { }
 
   // RTC properties
   rtc = {
@@ -29,77 +31,72 @@ export class AppComponent implements OnInit {
   username: string = ''; // Placeholder for the username
   messageInput: string = '';
   messages: { user: string; text: string }[] = []; // Store chat messages
- 
+
   isMuted: boolean = false;
   isCameraOff: boolean = false;
   // Agora options
   options = {
     appId: 'f27448ef49134e5aa176ef56fc17bf63',  // Set your App ID
-    channel: 'test',       // Channel name
-    token: null,           // Use a temporary token or generate it using your server
-    uid: null as unknown as number | string,  // Ensure uid can be a number or string
+    channel: 'Ankit',       // Channel name
+    token: '',
+    uid: null as unknown as number   // Ensure uid can be a number or string
   };
 
   isScreenSharing = false;
 
   ngOnInit() {
-    
     this.initializeRTCClient();
-   // this.initializeChat();
-
-    // this.agoraMessagingService.initialize(this.options.appId, null, null)
-    //   .then(() => {
-    //     console.log('Agora chat initialized successfully');
-    //     this.agoraMessagingService.onMessageReceived((message) => {
-    //       this.messages.push(message);
-    //     });
-    //   })
-    //   .catch(error => {
-    //     console.error('Agora chat initialization failed:', error);
-    //   });
+    this.initializeChat();
   }
 
   // Initialize the RTC client
   async initializeRTCClient() {
     this.rtc.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-  
     this.rtc.client.on('user-published', async (user: IAgoraRTCRemoteUser, mediaType) => {
       await this.rtc.client?.subscribe(user, mediaType);
       console.log('Subscribed to user:', user.uid);
-  
-      if ((mediaType === 'video'&&!this.isScreenSharing)) {
+
+      if ((mediaType === 'video' && !this.isScreenSharing)) {
         const remoteVideoTrack = user.videoTrack;
-      
+
         // Create a new remote player container for each user
-        
+
         const remotePlayerContainer = document.createElement('div');
         remotePlayerContainer.id = `remote-${user.uid}`; // Unique ID for each remote user
         remotePlayerContainer.classList.add('participant'); // Add class for styling
-  
+
         // Add participant actions (mute and camera buttons)
         const participantActionDiv = document.createElement('div');
         participantActionDiv.className = 'participant-action';
-  
+
         const muteButton = document.createElement('button');
         muteButton.className = 'btn-mute'; // Base class
         muteButton.style.backgroundColor = user.hasAudio ? '' : 'red'; // Set background color to red if muted
         participantActionDiv.appendChild(muteButton);
 
+        // Assuming muteButton is created and you're adding an event listener
         muteButton.addEventListener('click', async () => {
           if (user.audioTrack) {
             // Toggle mute/unmute
             if (user.audioTrack.isPlaying) {
-              user.audioTrack.stop(); // Mute the user
-              muteButton.style.backgroundColor = 'red'; // Change button to red when muted
+              // Mute the audio track
+              user.audioTrack.stop();
+              (muteButton as HTMLElement).style.backgroundColor = 'red'; // Cast to HTMLElement
+            } else {
+             
             }
           }
+
+
         });
 
-       const cameraButton = document.createElement('button');
-       cameraButton.className = 'btn-camera'; // Base class
-       cameraButton.style.backgroundColor = user.hasVideo ? '' : 'red'; // Set background color to red if camera is off
-       participantActionDiv.appendChild(cameraButton);
-  
+
+
+        const cameraButton = document.createElement('button');
+        cameraButton.className = 'btn-camera'; // Base class
+        cameraButton.style.backgroundColor = user.hasVideo ? '' : 'red'; // Set background color to red if camera is off
+        participantActionDiv.appendChild(cameraButton);
+
         // Add participant name
         const nameTag = document.createElement('a');
         nameTag.href = '#';
@@ -107,24 +104,24 @@ export class AppComponent implements OnInit {
         nameTag.textContent = this.username; // Dynamic participant name based on UID
         remotePlayerContainer.appendChild(participantActionDiv);
         remotePlayerContainer.appendChild(nameTag);
-  
-         if (mediaType === 'video' && user.hasVideo) {
-            const remoteVideoTrack = user.videoTrack;
-            remoteVideoTrack?.play(remotePlayerContainer); // Play the video track in the container
-        }else {
-      // If no video, show a placeholder image
-            const placeholderImage = document.createElement('img');
-            placeholderImage.src = '/public/img1.jpg'; // Adjust path as necessary
-            placeholderImage.alt = 'No video available';
-            placeholderImage.classList.add('video-placeholder'); // Optional: add a class for styling
-            remotePlayerContainer.appendChild(placeholderImage);
-    }
+
+        if (mediaType === 'video' && user.hasVideo) {
+          const remoteVideoTrack = user.videoTrack;
+          remoteVideoTrack?.play(remotePlayerContainer); // Play the video track in the container
+        } else {
+          // If no video, show a placeholder image
+          const placeholderImage = document.createElement('img');
+          placeholderImage.src = '/public/img1.jpg'; // Adjust path as necessary
+          placeholderImage.alt = 'No video available';
+          placeholderImage.classList.add('video-placeholder'); // Optional: add a class for styling
+          remotePlayerContainer.appendChild(placeholderImage);
+        }
         // Get all elements with the class 'video-participant'
         const videoParticipantElements = document.getElementsByClassName('video-participant');
-  
+
         // Find an available video-participant div that doesn't already have a remote player
         let participantAppended = false;
-  
+
         if (videoParticipantElements.length > 0) {
           for (let i = 0; i < videoParticipantElements.length; i++) {
             const videoParticipant = videoParticipantElements[i];
@@ -136,46 +133,54 @@ export class AppComponent implements OnInit {
             }
           }
         }
-  
+
         if (!participantAppended) {
           document.body.appendChild(remotePlayerContainer); // Append to body or a specific container
           remoteVideoTrack?.play(remotePlayerContainer);
         }
       }
-  
+
       if (mediaType === 'audio') {
         const remoteAudioTrack = user.audioTrack;
         remoteAudioTrack?.play();
       }
     });
- this.rtc.client.on('user-unpublished', (user: IAgoraRTCRemoteUser, mediaType) => {
-  console.log('User unpublished:', user.uid);
+    this.rtc.client.on('user-unpublished', (user: IAgoraRTCRemoteUser, mediaType) => {
+      console.log('User unpublished:', user.uid);
 
-  // Handle video unpublishing
-  if (mediaType === 'video') {
-    const remotePlayerContainer = document.getElementById(`remote-${user.uid}`);
-    if (remotePlayerContainer) {
-      if (user.videoTrack) {
-        user.videoTrack.stop(); 
+      // Handle video unpublishing
+      if (mediaType === 'video') {
+        const remotePlayerContainer = document.getElementById(`remote-${user.uid}`);
+        if (remotePlayerContainer) {
+          if (user.videoTrack) {
+            user.videoTrack.stop();
+          }
+          remotePlayerContainer.remove();
+        }
       }
-      remotePlayerContainer.remove();
-    }
-  }
 
-  // Handle audio unpublishing
-  if (mediaType === 'audio') {
-    if (user.audioTrack) {
-      user.audioTrack.stop(); 
-    }
-  }
-});
+      // Handle audio unpublishing
+      if (mediaType === 'audio') {
+        if (user.audioTrack) {
+          user.audioTrack.stop();
+        }
+      }
+    });
 
   }
-  
-  // Join the Agora channel
   async joinChannel() {
-    this.options.uid = Math.floor(Math.random() * 10000); // Generate a random user ID
-    await this.rtc.client?.join(this.options.appId, this.options.channel, this.options.token, this.options.uid);
+
+    this.options.uid = Math.floor(Math.random() * 10000);
+    const apiData: APIResponse = await firstValueFrom(
+      this.agoraMessagingService.getTokenChannel(this.options.uid, this.options.channel)
+    );
+
+    if (apiData.success) {
+      this.options.token = apiData.data;
+      await this.rtc.client?.join(this.options.appId, this.options.channel, this.options.token, this.options.uid);
+    } else {
+      console.error('Error retrieving token:', apiData.error);
+    }
 
     const localTracks = await Promise.all([
       AgoraRTC.createMicrophoneAudioTrack(),
@@ -214,7 +219,7 @@ export class AppComponent implements OnInit {
   // Display the local video track
   displayLocalVideo() {
     const localPlayerContainer = document.getElementById('123456');
-    localPlayerContainer != null ? this.rtc.localVideoTrack?.play(localPlayerContainer):undefined;
+    localPlayerContainer != null ? this.rtc.localVideoTrack?.play(localPlayerContainer) : undefined;
   }
   promptForUsername() {
     const usernameInput = prompt('Please enter your name:');
@@ -229,53 +234,53 @@ export class AppComponent implements OnInit {
   async toggleScreenShare() {
     if (!this.isScreenSharing) {
       this.isScreenSharing = true;
-  
+
       // Generate a new UID for the screen sharing participant
       const screenShareUid = this.options.uid + '1'; // Increment UID for demonstration
-  
+
       // Create a new client for screen sharing
       const screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-  
+
       try {
         // Create screen track
         const screenTracks = await AgoraRTC.createScreenVideoTrack({
           encoderConfig: '1080p'
         }) as ILocalVideoTrack | [ILocalVideoTrack, ILocalAudioTrack];
-  
+
         if (Array.isArray(screenTracks)) {
           this.rtc.localScreenTrack = screenTracks[0];
         } else {
           this.rtc.localScreenTrack = screenTracks;
         }
-  
+
         // Join the screen sharing channel with a new UID
         await screenClient.join(this.options.appId, this.options.channel, this.options.token, screenShareUid);
-  
+
         // Publish the screen track
         if (this.rtc.localScreenTrack) {
           await screenClient.publish(this.rtc.localScreenTrack);
           console.log('Screen sharing started');
-  
+
           // Add the screen sharing video to a separate container
-         // this.displayScreenShare();
+          // this.displayScreenShare();
         }
       } catch (error) {
         console.error('Error starting screen share:', error);
       }
     } else {
       this.isScreenSharing = false;
-  
+
       // Stop the screen track
       if (this.rtc.localScreenTrack) {
         this.rtc.localScreenTrack.close();
         this.rtc.localScreenTrack = null;
       }
-  
+
       try {
         // Leave the screen sharing channel
         await this.rtc.screenClient?.leave();
         console.log('Screen sharing stopped');
-  
+
         // Remove the screen sharing container
         this.removeScreenShare();
       } catch (error) {
@@ -283,7 +288,7 @@ export class AppComponent implements OnInit {
       }
     }
   }
-  
+
   // Display screen share in a separate container
   displayScreenShare() {
     const screenShareContainer = document.getElementById('screen-share-container');
@@ -292,7 +297,7 @@ export class AppComponent implements OnInit {
       const newScreenShareContainer = document.createElement('div');
       newScreenShareContainer.id = 'screen-share-container';
       newScreenShareContainer.classList.add('video-participant-screen');
-  
+
       document.body.appendChild(newScreenShareContainer); // Append to body or specific container
       //this.rtc.localScreenTrack?.play(newScreenShareContainer);
       //alert(JSON.stringify(this.rtc.localScreenTrack));
@@ -301,7 +306,7 @@ export class AppComponent implements OnInit {
       //this.rtc.localScreenTrack?.play(screenShareContainer);
     }
   }
-  
+
   // Remove the screen share container when screen sharing is stopped
   removeScreenShare() {
     const screenShareContainer = document.getElementById('screen-share-container');
@@ -309,7 +314,7 @@ export class AppComponent implements OnInit {
       screenShareContainer.remove();
     }
   }
-  
+
   // Send chat messages
   sendMessage() {
     if (this.messageInput.trim()) {
