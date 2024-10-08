@@ -157,6 +157,7 @@ export class AppComponent implements OnInit {
           }
           remotePlayerContainer.remove();
         }
+        
       }
 
       // Handle audio unpublishing
@@ -234,22 +235,16 @@ export class AppComponent implements OnInit {
   async toggleScreenShare() {
 
     if (!this.isScreenSharing) {
-
-      // Generate a new UID for the screen sharing participant
-
-      // Create a new client for screen sharing
-
       try {
-        // Create screen track
         const screenTracks = await AgoraRTC.createScreenVideoTrack({
           encoderConfig: '1080p'
         }) as ILocalVideoTrack | [ILocalVideoTrack, ILocalAudioTrack];
-
         if (Array.isArray(screenTracks)) {
           this.rtc.localScreenTrack = screenTracks[0];
         } else {
           this.rtc.localScreenTrack = screenTracks;
         }
+
 
         const screenShareUid = this.options.uid = Math.floor(Math.random() * 10000); // Increment UID for demonstration
         // Increment UID for demonstration
@@ -273,10 +268,11 @@ export class AppComponent implements OnInit {
         // Publish the screen track
         if (this.rtc.localScreenTrack) {
           await screenClient.publish(this.rtc.localScreenTrack);
+
           console.log('Screen sharing started');
 
           // Add the screen sharing video to a separate container
-          // this.displayScreenShare();
+         this.displayScreenShare();
         }
       } catch (error) {
         console.error('Error starting screen share:', error);
@@ -304,22 +300,26 @@ export class AppComponent implements OnInit {
   }
 
   // Display screen share in a separate container
-  displayScreenShare() {
-    const screenShareContainer = document.getElementById('screen-share-container');
-    if (!screenShareContainer) {
-      // Create a new div if it doesn't exist
-      const newScreenShareContainer = document.createElement('div');
-      newScreenShareContainer.id = 'screen-share-container';
-      newScreenShareContainer.classList.add('video-participant-screen');
+// Modify your displayScreenShare method to correctly play the screen share track in the new div
+displayScreenShare() {
+  let screenShareContainer = document.getElementById('screen-share-container');
 
-      document.body.appendChild(newScreenShareContainer); // Append to body or specific container
-      //this.rtc.localScreenTrack?.play(newScreenShareContainer);
-      //alert(JSON.stringify(this.rtc.localScreenTrack));
-    } else {
-      alert("here no");
-      //this.rtc.localScreenTrack?.play(screenShareContainer);
-    }
+  if (!screenShareContainer) {
+    // Create a new div if it doesn't exist
+    screenShareContainer = document.createElement('div');
+    screenShareContainer.id = 'screen-share-container';
+    screenShareContainer.classList.add('video-participant-screen');
+
+    document.body.appendChild(screenShareContainer); // Append to body or specific container
   }
+
+  // Make sure you are calling `play()` on the right container
+  if (this.rtc.localScreenTrack) {
+    this.rtc.localScreenTrack.play(screenShareContainer);  // Play the screen track in the correct div
+  }
+
+}
+
 
   // Remove the screen share container when screen sharing is stopped
   removeScreenShare() {
