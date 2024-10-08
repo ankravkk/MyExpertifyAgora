@@ -127,8 +127,8 @@
   .video-participant {
     width: 100%;
     height: 630px;
+    object-fit: revert !important;
     position: relative;
-    scroll-behavior: smooth;
 
     overflow-x: auto;
     overflow-y: scroll;
