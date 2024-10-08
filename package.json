@@ -22,6 +22,7 @@
     "agora-chat": "^1.2.2-3",
     "agora-chat-uikit": "^1.2.1",
     "agora-rtc-sdk-ng": "latest",
+    "agora-rtm-sdk": "^2.2.0",
     "fix": "^0.0.6",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
